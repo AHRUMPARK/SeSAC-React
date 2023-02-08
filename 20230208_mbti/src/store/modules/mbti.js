@@ -152,7 +152,7 @@ export function reset() {
     type: RESET,
   };
 }
-
+// state.mbtiResult '' + 액션데이터담긴 result 'x'값
 export default function mbti(state = initState, action) {
   switch (action.type) {
     case CHECK:
