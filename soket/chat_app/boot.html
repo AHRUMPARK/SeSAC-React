@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/static/boot.css">
+    <title>바른고운 채팅!!</title>
+</head>
+<body>
+    <div class="container text-center">
+
+        <div class="row">
+          <div class="col header">
+            <img id="user_img" src="" alt=""><span>바른고운 채팅</span>
+            <div class="who"></div>
+            <div class="name">who</div>
+            <!-- <div class="notice">ㅇㅇㅇ</div>  -->
+          </div>
+          
+        </div>
+
+        <div class="row">
+            <div class="col chat-box-body">
+              <div class="chat right user">나</div>
+              <div id="box3" class="box3 sb13">I'm speecasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdasdh </div>
+              <div class="chat right time">오전 12:24</div>
+        
+              <div class="chat left user">당신</div>
+              <div id="box4" class="box3 sb14">I'm speech bubble</div>
+              <div class="chat left time">오전 12:30</div>
+            </div>
+          </div>
+            <div class="notice"></div> 
+          <div class="row">
+            <div class="col chat-input">
+                <textarea placeholder="메세지를 입력하세요..." class="noresize" id="msgBox"></textarea>
+                <select id="members"></select>
+                <button class='sendBtn' type="submit" onclick="btnSend()">Send</button>
+            </div>
+          </div>
+      </div>
+      <script>
+        const username = prompt('닉네임을 입력해주세요.')
+        const socket = io.connect();
+        // 서버에게 닉네임을 알려줘야 한다. connect 이벤트때 서버로 보내주겟다.
+        socket.on("connect", () => {
+          console.log("server connected");
+          socket.emit('username', username);
+        })
+        // 공지
+        socket.on('notice', (msg) => {
+        const chat_box_body = document.querySelector('.chat-box-body');
+        console.log(chat_box_body);
+        const div = document.createElement('div');
+        div.classList.add('notice');
+        // 메세지를 넣어줘야 함
+        div.textContent = msg;
+        chat_box_body.appendChild(div);
+        })
+
+        // 소캣아이디 받기
+        let my_id = '' // 전체에서 쓰기위해 
+        socket.on('info', (socketID) => {
+            my_id = socketID;
+        });
+
+        // 실시간 디엠 리스트
+        socket.on('list', (list) => {
+          console.log('list', list);
+          const member_list = document.getElementById('members');
+          // 펄스트 차일드가 있으면 실행 > 셀렉박스 마지막 요소를 지운다.
+          // select box option tag 모두 지우기
+          while(member_list.firstChild) member_list.removeChild(member_list.lastChild);
+          const option = document.createElement('option') // 옵션
+          option.text ='전체'
+          option.value ='전체'
+          // 옵션 추가
+          member_list.appendChild(option);
+          // 접속 인원 디엠 셀렉박스 리시트
+          console.log(Object.entries(list));
+          for (let [key, value] of Object.entries(list)) {
+            const option = document.createElement('option');
+            option.text = value;
+            option.value = value;
+            member_list.appendChild(option);
+          }
+        });
+
+        // 보내기 버튼
+        const btnSend = () => {
+          const input = document.getElementById('msgBox');
+          const to = document.getElementById('members').value; // 어떤 사람인지 보낼때 정보도 같이 보낸다 to
+          // {to : to }
+          socket.emit('send', {msg : input.value, to})
+          input.value =''
+        }
+        socket.on('newMSG', (json) => {
+          console.log( json );
+          // msg : 메세지, from : 보낸 사람의 소켓 아이디, username: 보낸 이 닉네임
+          // json = { msg : ~~~, from : ~~~ } 
+          const chat_box_body = document.querySelector('.chat-box-body');
+          console.log(chat_box_body);
+          const outer_div = document.createElement('div');
+          const div = document.createElement('div');
+          // 클레스 밖, 메세지 안
+          if(my_id === json.form)
+          console.log('json.form :',json.form)
+          div.textContent = json.username + " : " + json.msg;
+          
+          // 보내는 사람인지 받는 사람인지 클래스 구분
+          if( my_id === json.form ) {
+            if (json.is_dm) 
+            outer_div.classList.add('my-dm','box3','sb13','chat','right');
+            else outer_div.classList.add('box3','sb13','chat','right');}
+          else {
+            if (json.is_dm) outer_div.classList.add('dm','box3','sb14','chat','right');
+            else outer_div.classList.add('box3','sb14', 'chat','left');
+          } 
+          outer_div.appendChild(div);
+          // 클래스 중첩 부여시 ('','')
+          chat_box_body.appendChild(outer_div);
+        })
+        const enter = () => {
+          if(event.keyCode == 13){
+            btnSend();
+          }
+        }
+      </script>
+</body>
+</html>
