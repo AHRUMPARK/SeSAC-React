@@ -67,10 +67,11 @@
         socket.on('info', (socketID) => {
             my_id = socketID;
         });
-
+        console.log(my_id)
         // 실시간 디엠 리스트
         socket.on('list', (list) => {
           console.log('list', list);
+           console.log('쉬수시ㅜ시ㅜ시ㅜ시ㅜ시ㅜ시', list);
           const member_list = document.getElementById('members');
           // 펄스트 차일드가 있으면 실행 > 셀렉박스 마지막 요소를 지운다.
           // select box option tag 모두 지우기

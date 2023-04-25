@@ -18,13 +18,14 @@ io.on('connect', (socket) => {
   console.log('Server Socket connected');
 
   // 통신하는 고유 소캣 아이디 클라이언트에게 보내기
-  socket.emit('info', socket.id);
-
+  socket.on('info', socket.id);
+  console.log('쉬수시ㅜ시ㅜ시ㅜ시ㅜ시ㅜ시', socket.id);
   // io.emit('notice', socket.id + '님이 입장하셨습니다.');
   socket.on('username', (name) => {
     list[socket.id] = name;
 
     io.emit('list', list);
+
     io.emit('notice', name + '님이 입장하셨습니다.');
   });
 
